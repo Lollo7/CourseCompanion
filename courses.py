@@ -2,20 +2,12 @@ import requests
 import os
 import json
 from dotenv import load_dotenv
-import pandas as pd
 
 # Load environment variables from a .env file
 load_dotenv()
 
-def courses_to_csv(course_json):
-    # Convert to DataFrame and write to CSV
-    course_df = pd.DataFrame(course_json)
-    course_df.to_csv("personal/courses.csv", index=False)
-    print("Courses data saved to courses.csv")
-    return True
-
 # Replace with your actual Canvas instance domain and API endpoint
-canvas_url = "https://umich.instructure.com/api/v1"
+canvas_url = "https://canvas.instructure.com/api/v1"
 access_token = os.getenv("CANVAS_ACCESS_TOKEN")
 
 # Headers for authorization
@@ -23,30 +15,72 @@ headers = {
     "Authorization": f"Bearer {access_token}"
 }
 
-name = "courses"
-url = f"{canvas_url}/courses"
+# List of course IDs (replace with your actual list of course IDs)
+course_ids = [
+    17700000000698456,  # Example course ID, replace with actual ones
+    # Add more course IDs as needed
+]
 
-# Loop over each page of results, using pagination
-all_courses = []
-while url:
-    response = requests.get(url, headers=headers)
-    if response.status_code == 200:
-        data = response.json()
-        all_courses.extend(data)  # Collect all courses across pages
-        # Check for 'next' link in the headers for pagination
-        if 'next' in response.links:
-            url = response.links['next']['url']
+def fetch_files(course_id):
+    """Fetch all files for a given course ID."""
+    url = f"{canvas_url}/courses/{course_id}/files"
+    all_files = []
+    
+    while url:
+        response = requests.get(url, headers=headers)
+        if response.status_code == 200:
+            data = response.json()
+            all_files.extend(data)  # Collect all files across pages
+            
+            # Check for 'next' link in the headers for pagination
+            if 'next' in response.links:
+                url = response.links['next']['url']
+            else:
+                url = None  # No more pages
         else:
-            url = None  # No more pages
+            print(f"Failed to retrieve files for course {course_id}: {response.status_code}")
+            break
+    
+    return all_files
+
+def download_file(file_info, download_dir):
+    """Download a file given its URL and save it locally."""
+    file_url = file_info['url']
+    file_name = file_info['filename']
+    
+    # Make sure the download directory exists
+    os.makedirs(download_dir, exist_ok=True)
+    
+    # Full path where the file will be saved
+    file_path = os.path.join(download_dir, file_name)
+    
+    # Download the file and save it locally
+    response = requests.get(file_url)
+    
+    if response.status_code == 200:
+        with open(file_path, 'wb') as f:
+            f.write(response.content)
+        print(f"Downloaded {file_name} to {file_path}")
+        return file_path
     else:
-        print(f"Failed to retrieve {name} data:", response.status_code)
-        break
+        print(f"Failed to download {file_name}: {response.status_code}")
+        return None
 
-# Save the accumulated data to JSON and CSV
-os.makedirs("personal", exist_ok=True)  # Create the directory if it doesn't exist
-with open(f"personal/{name}.json", "w") as json_file:
-    json.dump(all_courses, json_file, indent=4)
-print(f"{name.capitalize()} JSON data saved to personal/{name}.json")
+# Fetch and download files for each course in the list
+downloaded_files = []
 
-if name == "courses":
-    courses_to_csv(all_courses)
+for course_id in course_ids:
+    print(f"Fetching files for course ID: {course_id}")
+    files = fetch_files(course_id)
+    
+    # Download each file and store its local path
+    for file_info in files:
+        downloaded_file_path = download_file(file_info, f"personal/course_{course_id}_files")
+        if downloaded_file_path:
+            downloaded_files.append(downloaded_file_path)
+
+# Save metadata about downloaded files to a JSON file (optional)
+with open("personal/downloaded_files.json", "w") as json_file:
+    json.dump(downloaded_files, json_file, indent=4)
+
+print("All files have been downloaded.")
