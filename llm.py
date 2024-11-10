@@ -15,6 +15,9 @@ import json
 with open('output.json', 'r') as file:
     data = json.load(file)
 
+with open('today.json', 'r') as file:
+    today = json.load(file)
+
 # Access the data from the output.json file
 # Example: Print the value of the 'result' key
 # print(data['result'])
@@ -23,7 +26,8 @@ with open('output.json', 'r') as file:
 load_dotenv()
 
 # Retrieve the OpenAI API key from environment variables
-openai_api_key = os.getenv("OPENAI_API_KEY")
+# openai_api_key = os.getenv("OPENAI_API_KEY")
+openai_api_key = "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"
 
 if not openai_api_key:
     raise ValueError("OPENAI_API_KEY not found in environment variables. Please check your .env file.")
@@ -143,4 +147,12 @@ event = {
 
 # Main execution block: Run an example query when this script is executed directly.
 if __name__ == '__main__':
-    run_example_query(f"Given these assignments, {data}, and the current day being {date.today()}, I want help planning out my assignmets. Can you create a scheule based on assignment points and difficulty and output your response in the following format {sample_output}. I expect only a list of json objects and no other information.")
+    run_example_query(
+        f"Given these assignments, {data}, my current events {today},"
+        f"and the current day being {date.today()}, I want help planning"
+        f"out my assignmets around what I already have scheduled. Can you create"
+        f"a scheule based on assignment points and difficulty and output your response"
+        f"in the following format {sample_output}. I expect only a list of json objects and"
+        f"no other information. I only want the most important assignments that are due the earliest."
+        f"Please only include a schedule for today {date.today()}."
+    )
