@@ -1,8 +1,6 @@
 import datetime
 import requests
-import json
 import pandas as pd
-import bs4
 import re
 
 # Call return_current_term() to get the current term name
