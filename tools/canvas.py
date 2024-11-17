@@ -61,7 +61,7 @@ def get_assignments(course_id, course_name):
 def get_folders(course_id, course_name):
     url = f"{canvas_url}/courses/{course_id}/folders"
     response = requests.get(url, headers=headers)
-    save_to_json(f"{course_name}_folders", response.json(), course_name)
+    save_to_json(f"folders", response.json(), course_name)
     return response.json()
 
 def get_files(course_id, course_name):
@@ -73,13 +73,12 @@ def get_files(course_id, course_name):
         url = f"{canvas_url}/folders/{folder_id}/files"
         response = requests.get(url, headers=headers)
         course_files.extend(response.json())
-    folder = save_to_json(f"{course_name}_files", course_files, course_name)
+    file = save_to_json(f"files", course_files, course_name)
+    folder = "/".join(file.split("/")[:-1])
 
     # remove .json from folder name
-    download_files(folder[:-5], folder)
+    download_files(folder, file)
     return folder
-
-
 
 def save_to_json(name, data, tree = None):
     if tree:
@@ -92,10 +91,11 @@ def save_to_json(name, data, tree = None):
     print(f"{name.capitalize()} JSON data saved to personal/{name}.json")
     return f"{tree}/{name}.json"
 
-def download_files(course_name, json_file):
+def download_files(folder, json_file):
     # Create directory for the course
-    if not os.path.exists(course_name):
-        os.makedirs(course_name)
+    folder = f"{folder}/files"
+    if not os.path.exists(folder):
+        os.makedirs(folder)
 
     # Read JSON data
     with open(json_file, 'r') as file:
@@ -107,7 +107,7 @@ def download_files(course_name, json_file):
     for entry in data:
         file_url = entry['url']
         file_name = entry['filename']
-        file_path = os.path.join(course_name, file_name)
+        file_path = os.path.join(folder, file_name)
 
         # Download the file
         response = requests.get(file_url)
