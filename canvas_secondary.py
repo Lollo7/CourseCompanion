@@ -2,6 +2,7 @@ import requests
 import os
 import json
 from dotenv import load_dotenv
+import tools.current_term as ct
 
 # Load environment variables from a .env file
 load_dotenv()
@@ -22,11 +23,6 @@ endpoints = {
     "courses": f"{canvas_url}/courses",
     "assignments": f"{canvas_url}/courses/{course_id}/assignments",
     "files": f"{canvas_url}/courses/{course_id}/files"
-}
-
-# Headers for authorization
-headers = {
-    "Authorization": f"Bearer {access_token}"
 }
 
 # Loop over each endpoint, request data, and save to JSON

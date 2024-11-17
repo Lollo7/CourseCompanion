@@ -26,7 +26,7 @@ from googleapiclient.errors import HttpError
 SCOPES = ["https://www.googleapis.com/auth/calendar.readonly"]
 
 
-def main():
+def get_next_ten():
   """Shows basic usage of the Google Calendar API.
   Prints the start and name of the next 10 events on the user's calendar.
   """
@@ -50,6 +50,7 @@ def main():
       token.write(creds.to_json())
 
   try:
+    print("Getting the upcoming 10 events")
     service = build("calendar", "v3", credentials=creds)
 
     # Call the Calendar API
@@ -73,15 +74,56 @@ def main():
       return
 
     # Prints the start and name of the next 10 events
-    print(events)
+    upcoming_events = []
     for event in events:
-      start = event["start"].get("dateTime", event["start"].get("date"))
-      print(start, event["summary"])
+      upcoming_events.append(event["start"].get("dateTime", event["start"].get("date")))
 
   except HttpError as error:
     print(f"An error occurred: {error}")
 
+def create_events(event):
+  creds = None
+  # The file token.json stores the user's access and refresh tokens, and is
+  # created automatically when the authorization flow completes for the first
+  # time.
+  if os.path.exists("token.json"):
+    creds = Credentials.from_authorized_user_file("token.json", SCOPES)
+  # If there are no (valid) credentials available, let the user log in.
+  if not creds or not creds.valid:
+    if creds and creds.expired and creds.refresh_token:
+      creds.refresh(Request())
+    else:
+      flow = InstalledAppFlow.from_client_secrets_file(
+          "credentials.json", SCOPES
+      )
+      creds = flow.run_local_server(port=0)
+    # Save the credentials for the next run
+    with open("token.json", "w") as token:
+      token.write(creds.to_json())
+
+  try:
+    print("Creating new event")
+    service = build("calendar", "v3", credentials=creds)
+    event = {
+      'summary': 'Google I/O 2015',
+      'location': '800 Howard St., San Francisco, CA 94103',
+      'description': 'A chance to hear more about Google\'s developer products.',
+      'start': {
+        'dateTime': '2022-06-03T09:00:00-07:00',
+        'timeZone': 'America/Los_Angeles',
+      },
+      'end': {
+        'dateTime': '2022-06-03T17:00:00-07:00',
+        'timeZone': 'America/Los_Angeles',
+      },
+      'recurrence': [
+        'RRULE:FREQ=DAILY;COUNT=2'
+      ],
+    }
+    event = service.events().insert(calendarId='primary', body=event).execute()
+  except HttpError as error:
+    print(f"An error occurred: {error}")
 
 if __name__ == "__main__":
-  main()
+  create_events("hey")
 # [END calendar_quickstart]

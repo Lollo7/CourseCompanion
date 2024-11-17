@@ -1,0 +1,9 @@
+tools
+  canvas.py
+    - get_courses()
+    - get_current_courses()
+    - get_assignments(course_id)
+    - get_files(course_id)
+  current_term.py
+    - return_current_term()
+    - get_new_terms()

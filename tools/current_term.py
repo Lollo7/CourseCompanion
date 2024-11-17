@@ -88,7 +88,7 @@ def get_new_terms(last_term_id):
 def return_current_term():
 # create terms.csv with 3 columns (term_id, term_name, term_start_date, term_end_date)
 # check current date within the last term start and end date
-    check_csv = pd.read_csv("terms.csv")
+    check_csv = pd.read_csv("tools/terms.csv")
     last_term_id = check_csv["term_id"].iloc[-1]
     last_term_start_date = check_csv["term_start_date"].iloc[-1]
     last_term_end_date = check_csv["term_end_date"].iloc[-1]
@@ -121,5 +121,5 @@ def return_current_term():
 
             # Convert the dictionary to a DataFrame and use pd.concat to add it as a new row
             check_csv.loc[len(check_csv)] = new_row    # write new csv to terms.csv
-    check_csv.to_csv("terms.csv", index=False)
+    check_csv.to_csv("tools/terms.csv", index=False)
     return check_csv["term_name"].iloc[-1]
